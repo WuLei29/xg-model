@@ -195,13 +195,37 @@ cython_debug/
 .abstra/
 
 # Visual Studio Code
-#   Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore 
-#   that can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
-#   and can be added to the global gitignore or merged into this file. However, if you prefer, 
-#   you could uncomment the following to ignore the entire vscode folder
 # .vscode/
-# Temporary file for partial code execution
 tempCodeRunnerFile.py
+
+# ── xG model project ──────────────────────────────
+# Raw data (downloaded from HuggingFace, not tracked)
+data/raw/*.parquet
+data/raw/*.csv
+data/raw/*.json
+
+# Intermediate and processed datasets
+data/interim/*
+data/processed/*
+!data/interim/.gitkeep
+!data/processed/.gitkeep
+
+# Model artifacts
+outputs/models/*.joblib
+outputs/models/*.pkl
+outputs/models/*.json
+outputs/models/*.xgb
+
+# Large output files
+outputs/figures/*.png
+outputs/figures/*.pdf
+outputs/figures/*.svg
+outputs/tables/*.csv
+outputs/reports/*.md
+!outputs/figures/.gitkeep
+!outputs/tables/.gitkeep
+!outputs/models/.gitkeep
+!outputs/reports/.gitkeep
 
 # Ruff stuff:
 .ruff_cache/
