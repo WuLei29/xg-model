@@ -1,0 +1,11 @@
+data:
+  raw_dir: data/raw
+  interim_dir: data/interim
+  processed_dir: data/processed
+  huggingface_shot_data: luxury-lakehouse/xg-shot-data
+
+outputs:
+  figures_dir: outputs/figures
+  tables_dir: outputs/tables
+  models_dir: outputs/models
+  reports_dir: outputs/reports

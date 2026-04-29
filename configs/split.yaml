@@ -1,0 +1,7 @@
+split:
+  train_frac: 0.70
+  val_frac: 0.15
+  # test_frac = 1 - train_frac - val_frac = 0.15
+  n_strata: 5        # number of goal-rate quantile buckets for stratification
+  random_state: 42
+  method: match_grouped  # only supported method; kept for future extensibility

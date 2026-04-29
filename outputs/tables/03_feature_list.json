@@ -1,0 +1,82 @@
+{
+  "groups": {
+    "baseline_spatial": [
+      "distance_to_goal",
+      "visible_angle",
+      "distance_to_near_post",
+      "distance_to_far_post",
+      "x_from_goal_line",
+      "is_central"
+    ],
+    "baseline_categorical": [
+      "is_header",
+      "is_right_foot",
+      "is_left_foot",
+      "is_other_bodypart",
+      "is_normal_technique",
+      "is_volley",
+      "is_diving_header",
+      "is_exotic_technique",
+      "is_regular_play",
+      "is_from_counter",
+      "is_from_set_piece_restart"
+    ],
+    "baseline_contextual": [
+      "is_first_time",
+      "is_weak_foot",
+      "minute"
+    ],
+    "advanced_gamestate": [
+      "score_diff_at_shot",
+      "is_late_game"
+    ]
+  },
+  "sets": {
+    "baseline": [
+      "distance_to_goal",
+      "visible_angle",
+      "distance_to_near_post",
+      "distance_to_far_post",
+      "x_from_goal_line",
+      "is_central",
+      "is_header",
+      "is_right_foot",
+      "is_left_foot",
+      "is_other_bodypart",
+      "is_normal_technique",
+      "is_volley",
+      "is_diving_header",
+      "is_exotic_technique",
+      "is_regular_play",
+      "is_from_counter",
+      "is_from_set_piece_restart",
+      "is_first_time",
+      "is_weak_foot",
+      "minute"
+    ],
+    "full": [
+      "distance_to_goal",
+      "visible_angle",
+      "distance_to_near_post",
+      "distance_to_far_post",
+      "x_from_goal_line",
+      "is_central",
+      "is_header",
+      "is_right_foot",
+      "is_left_foot",
+      "is_other_bodypart",
+      "is_normal_technique",
+      "is_volley",
+      "is_diving_header",
+      "is_exotic_technique",
+      "is_regular_play",
+      "is_from_counter",
+      "is_from_set_piece_restart",
+      "is_first_time",
+      "is_weak_foot",
+      "minute",
+      "score_diff_at_shot",
+      "is_late_game"
+    ]
+  }
+}

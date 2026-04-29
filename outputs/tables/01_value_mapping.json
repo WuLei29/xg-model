@@ -1,0 +1,50 @@
+{
+  "shot_outcome": [
+    "Blocked",
+    "Goal",
+    "No Goal",
+    "Off T",
+    "Post",
+    "Saved",
+    "Saved Off Target",
+    "Saved to Post",
+    "Wayward"
+  ],
+  "shot_body_part": [
+    "Head",
+    "Left Foot",
+    "Other",
+    "Right Foot",
+    "Unknown"
+  ],
+  "shot_technique": [
+    "Backheel",
+    "Diving Header",
+    "Half Volley",
+    "Lob",
+    "None",
+    "Normal",
+    "Overhead Kick",
+    "Volley"
+  ],
+  "shot_type": [
+    "Corner",
+    "Free Kick",
+    "Kick Off",
+    "Open Play",
+    "Penalty",
+    "Shot"
+  ],
+  "play_pattern": [
+    "From Corner",
+    "From Counter",
+    "From Free Kick",
+    "From Goal Kick",
+    "From Keeper",
+    "From Kick Off",
+    "From Throw In",
+    "None",
+    "Other",
+    "Regular Play"
+  ]
+}

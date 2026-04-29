@@ -1,0 +1,74 @@
+pitch:
+  length: 120.0
+  width: 80.0
+  goal_x: 120.0
+  goal_y_center: 40.0
+  goal_post_left_y: 36.0   # smaller y value
+  goal_post_right_y: 44.0  # larger y value
+  goal_width: 8.0           # yards (44 - 36)
+  central_half_width: 10.0  # yards from center; is_central = |y - 40| <= this
+
+features:
+  baseline_spatial:
+    - distance_to_goal
+    - visible_angle
+    - distance_to_near_post
+    - distance_to_far_post
+    - x_from_goal_line
+    - is_central
+
+  baseline_categorical:
+    - is_header
+    - is_right_foot
+    - is_left_foot
+    - is_other_bodypart
+    - is_normal_technique
+    - is_volley
+    - is_diving_header
+    - is_exotic_technique
+    - is_regular_play
+    - is_from_counter
+    - is_from_set_piece_restart
+
+  baseline_contextual:
+    - is_first_time
+    - is_weak_foot
+    - minute
+
+  advanced_gamestate:
+    - score_diff_at_shot
+    - is_late_game
+
+feature_sets:
+  baseline:
+    - baseline_spatial
+    - baseline_categorical
+    - baseline_contextual
+  full:
+    - baseline_spatial
+    - baseline_categorical
+    - baseline_contextual
+    - advanced_gamestate
+
+# Columns kept in the design matrix for metadata / subgroup analysis but never model inputs.
+metadata_cols:
+  - shot_id
+  - match_id
+  - match_key
+  - competition_id
+  - season_id
+  - player_id
+  - team_id
+  - period
+  - second
+  - location_x
+  - location_y
+  - shot_outcome
+  - shot_body_part
+  - shot_technique
+  - shot_type
+  - play_pattern
+
+target_cols:
+  - is_goal
+  - statsbomb_xg
