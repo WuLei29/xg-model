@@ -10,12 +10,12 @@ pitch:
 
 features:
   baseline_spatial:
-    - distance_to_goal
-    - visible_angle
-    - distance_to_near_post
-    - distance_to_far_post
-    - x_from_goal_line
-    - is_central
+    - distance_to_goal # Distancia hasta la porteria
+    - visible_angle # Ángulo a la porteria
+    - distance_to_near_post # Distancia al palo más cercano
+    - distance_to_far_post # Distancia al palo más lejano
+    - x_from_goal_line # Distancia x a la linea de gol
+    - is_central # Si esta centrado
 
   baseline_categorical:
     - is_header
@@ -27,8 +27,8 @@ features:
     - is_diving_header
     - is_exotic_technique
     - is_regular_play
-    - is_from_counter
-    - is_from_set_piece_restart
+    - is_from_counter # The event was part of a counter attack.
+    - is_from_set_piece_restart # The event was part of the passage of play following a corner, free-kick or throw-in
 
   baseline_contextual:
     - is_first_time
@@ -48,7 +48,7 @@ feature_sets:
     - baseline_spatial
     - baseline_categorical
     - baseline_contextual
-    - advanced_gamestate
+    - advanced_gamestate # We add gamestate to the model
 
 # Columns kept in the design matrix for metadata / subgroup analysis but never model inputs.
 metadata_cols:
