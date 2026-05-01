@@ -70,9 +70,9 @@ SUBGROUP_DEFS: list[tuple[str, str, str]] = [
     ("Counter-attack", "pattern", "is_from_counter == 1"),
     ("Set-piece restart", "pattern", "is_from_set_piece_restart == 1"),
     # distance
-    ("Close range (<=10 yds)", "distance", "distance_to_goal <= 10"),
-    ("Medium range (10-20 yds)", "distance", "(distance_to_goal > 10) & (distance_to_goal <= 20)"),
-    ("Long range (>20 yds)", "distance", "distance_to_goal > 20"),
+    ("Close range (<=10m)", "distance", "distance_to_goal <= 10"),
+    ("Medium range (10-20m)", "distance", "(distance_to_goal > 10) & (distance_to_goal <= 20)"),
+    ("Long range (>20m)", "distance", "distance_to_goal > 20"),
 ]
 
 

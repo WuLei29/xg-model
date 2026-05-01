@@ -139,10 +139,10 @@ SUBGROUP_DEFS: dict[str, tuple] = {
     "Set-piece restart":       (lambda df: df["is_from_set_piece_restart"] == 1,    "pattern"),
 
     # ---- Distance ----
-    "Close range (<=10 yds)":  (lambda df: df["distance_to_goal"] <= 10,            "distance"),
-    "Medium range (10-20 yds)":(lambda df: (df["distance_to_goal"] > 10) &
+    "Close range (<=10m)":     (lambda df: df["distance_to_goal"] <= 10,            "distance"),
+    "Medium range (10-20m)":   (lambda df: (df["distance_to_goal"] > 10) &
                                             (df["distance_to_goal"] <= 20),         "distance"),
-    "Long range (>20 yds)":    (lambda df: df["distance_to_goal"] > 20,             "distance"),
+    "Long range (>20m)":       (lambda df: df["distance_to_goal"] > 20,             "distance"),
 
     # ---- Visible angle ----
     "Wide angle (>=30 deg)":   (lambda df: df["visible_angle"] >= 30,               "angle"),
@@ -680,8 +680,8 @@ def main() -> None:
 
     key_subgroups = [
         "Headers",
-        "Close range (<=10 yds)",
-        "Long range (>20 yds)",
+        "Close range (<=10m)",
+        "Long range (>20m)",
         "Counter-attack",
         "First-time",
         "Narrow angle (<15 deg)",

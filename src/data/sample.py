@@ -183,15 +183,33 @@ def add_weak_foot(df: pd.DataFrame, preferred_foot: pd.DataFrame, allow_weak_foo
 # Sample building
 # ---------------------------------------------------------------------------
 
+SB_LENGTH = 120.0
+SB_WIDTH = 80.0
+SPADL_LENGTH = 105.0
+SPADL_WIDTH = 68.0
+
+
+def _convert_coordinates_to_spadl(df: pd.DataFrame) -> pd.DataFrame:
+    """Convert StatsBomb coordinates (120x80) to SPADL standard (105x68 metres)."""
+    df = df.copy()
+    df["location_x"] = df["location_x"] * (SPADL_LENGTH / SB_LENGTH)
+    df["location_y"] = df["location_y"] * (SPADL_WIDTH / SB_WIDTH)
+    return df
+
+
 def build_samples(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
     Returns (open_play_df, free_kick_df), both StatsBomb-only and post-shot-columns dropped.
+    Coordinates are converted from StatsBomb (120x80) to SPADL (105x68 metres).
     """
     # StatsBomb only: identified by non-null statsbomb_xg
     statsbomb = df[df["statsbomb_xg"].notna()].copy()
 
     # Drop forbidden post-shot columns
     statsbomb = statsbomb.drop(columns=[c for c in FORBIDDEN_COLS if c in statsbomb.columns])
+
+    # Convert coordinates from StatsBomb to SPADL
+    statsbomb = _convert_coordinates_to_spadl(statsbomb)
 
     # Open play: everything that's not a penalty, free kick, corner, or kick-off
     open_play = statsbomb[~statsbomb["shot_type"].isin(EXCLUDED_TYPES)].copy()

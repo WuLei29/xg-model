@@ -77,20 +77,20 @@ def add_spatial_features(df: pd.DataFrame) -> pd.DataFrame:
     """
     Derives all spatial features from raw (location_x, location_y) coordinates.
 
-    StatsBomb coordinate system
-    ---------------------------
-    Pitch: 120 x 80 units.  Goal at x=120, posts at y=36 (left) and y=44 (right),
-    centered at y=40.  A unit is roughly 0.83 m (100 m pitch / 120 units).
+    SPADL coordinate system (105 x 68 metres)
+    ------------------------------------------
+    Goal at x=105, posts at y=30.34 and y=37.66, centered at y=34.
+    All distances are in metres.
 
     Features added
     --------------
-    distance_to_goal      distance from shot location to goal center (120, 40)
+    distance_to_goal      distance from shot location to goal center (105, 34)
     visible_angle         angle subtended by the goal posts in degrees —
                           the "opening" the shooter sees; larger = easier chance
     distance_to_near_post distance to the goal post with the closer y-coordinate
     distance_to_far_post  distance to the goal post with the farther y-coordinate
-    x_from_goal_line      120 - location_x — how far back from the goal line
-    is_central            1 if |y - 40| <= 10 (central 20-unit corridor)
+    x_from_goal_line      105 - location_x — how far back from the goal line
+    is_central            1 if |y - 34| <= 8.5 (central corridor)
     """
     cfg = load_feature_config()["pitch"]
     GOAL_X: float = cfg["goal_x"]
@@ -339,18 +339,18 @@ def generate_report(df: pd.DataFrame, cfg: dict) -> str:
         | is_late_game | YES | Derived from minute |
     """))
 
-    lines.append("## 3. Spatial Geometry (StatsBomb Coordinates)\n")
+    lines.append("## 3. Spatial Geometry (SPADL Coordinates — metres)\n")
     lines.append(textwrap.dedent(f"""\
         ```
-        Pitch: 120 × 80 units  (~83m × 68m equivalent)
-        Goal center:  (120, 40)
-        Goal posts:   left=(120, 36),  right=(120, 44)
-        Goal width:   8 units (~7.3m)
+        Pitch: 105 × 68 metres (SPADL standard)
+        Goal center:  (105, 34)
+        Goal posts:   left=(105, 30.34),  right=(105, 37.66)
+        Goal width:   7.32 m
 
-        visible_angle = |atan2(44−y, 120−x) − atan2(36−y, 120−x)|  [degrees]
+        visible_angle = |atan2(37.66−y, 105−x) − atan2(30.34−y, 105−x)|  [degrees]
 
-        Intuition: a shot from directly in front at 10 units (~8.3m) sees a
-        ~30° angle; a shot from 30 units and wide sees only ~5°.
+        Intuition: a shot from directly in front at 10m sees a ~30° angle;
+        a shot from 25m and wide sees only ~5°.
         ```
     """))
 

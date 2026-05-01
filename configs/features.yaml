@@ -1,12 +1,12 @@
 pitch:
-  length: 120.0
-  width: 80.0
-  goal_x: 120.0
-  goal_y_center: 40.0
-  goal_post_left_y: 36.0   # smaller y value
-  goal_post_right_y: 44.0  # larger y value
-  goal_width: 8.0           # yards (44 - 36)
-  central_half_width: 10.0  # yards from center; is_central = |y - 40| <= this
+  length: 105.0
+  width: 68.0
+  goal_x: 105.0
+  goal_y_center: 34.0
+  goal_post_left_y: 30.34   # smaller y value (34 - 3.66)
+  goal_post_right_y: 37.66  # larger y value (34 + 3.66)
+  goal_width: 7.32           # metres (37.66 - 30.34)
+  central_half_width: 8.5    # metres from center; is_central = |y - 34| <= this
 
 features:
   baseline_spatial:
