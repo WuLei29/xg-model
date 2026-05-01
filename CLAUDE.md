@@ -338,6 +338,21 @@ The project follows 12 sequential phases. **Always complete and confirm one phas
 
 ## Modeling Conventions
 
+### Production Model Dispatching
+
+The inference pipeline must route each shot to the correct model based on `shot_type`:
+
+| shot_type      | Model artifacts                                                     | Feature set        |
+|----------------|---------------------------------------------------------------------|--------------------|
+| `"Free Kick"`  | `fk_xgboost.json` + `fk_platt_calibrator.joblib`                   | `freekick_full` (11 features) |
+| anything else  | `06_xgboost_full.json` + `07_platt_xgb_full.joblib`                | `full` (22 features) |
+
+Feeding a free-kick shot to the open-play model (or vice versa) will produce miscalibrated xG — the models were trained on different feature distributions and different populations.
+
+The two models share the same feature engineering pipeline (`src/features/build.py`) — both call `build_features()` on their respective input DataFrames. Only the feature selection step differs.
+
+---
+
 ### Leakage Prevention
 
 The fundamental rule: **only use information available at the moment of shot release.**
@@ -427,6 +442,9 @@ python -m src.evaluation.subgroups
 # Phase 9: Comparative analysis & gap investigation
 python -m src.evaluation.compare
 
+# Free-kick model (run after Phase 4 — uses the same split index)
+python -m src.models.train_xgboost_freekick
+
 # Phase 11: Inference
 python -m src.inference.predict
 ```
@@ -451,7 +469,7 @@ python -m src.inference.predict
 ### Key decisions made
 - StatsBomb data only (drops Wyscout — richer features, consistent schema, statsbomb_xg available as benchmark)
 - Open-play model: excludes penalties, direct free kicks, corners, kick-offs
-- Free-kick model: separate dataset, logistic regression only (sample too thin for XGBoost)
+- Free-kick model: separate XGBoost model (`src/models/train_xgboost_freekick.py`), 12-feature set (spatial + foot body-part + is_first_time + minute + gamestate); inline Platt calibration; reuses open-play match-level split
 - No freeze-frame features — production event data does not have them
 - Play pattern included: grouped into 3 binary flags (regular, counter, set_piece_restart); other restarts are implicit baseline
 - Preferred foot inferred statistically (≥70% threshold); `is_weak_foot` added as feature
@@ -466,6 +484,7 @@ python -m src.inference.predict
 - **Phase 8: Subgroup Analysis** — `src/evaluation/subgroups.py` · outputs: `08_subgroup_metrics_lr.csv`, `08_subgroup_metrics_xgb.csv`, `08_subgroup_report.md`
 - **Phase 9: Comparative Analysis & Gap Investigation** — `src/evaluation/compare.py` · outputs: `09_benchmark_metrics.csv`, `09_divergence_by_subgroup.csv`, `09_stacking_metrics.csv`, `09_calibration_comparison.png`, `09_prediction_distributions.png`, `09_scatter_xgb_vs_statsbomb.png`, `09_divergence_by_subgroup.png`, `09_stacking_calibration.png`, `09_compare_report.md`
 - **Phase 10: Production Recommendation** — `outputs/reports/10_production_recommendation.md`
+- **Free-kick XGBoost Model** — `src/models/train_xgboost_freekick.py` · `configs/features.yaml` (`freekick_full` set, 12 features) · outputs: `fk_xgboost.json`, `fk_platt_calibrator.joblib`, `fk_val_predictions.parquet`, `fk_test_predictions.parquet`, `fk_metrics.csv`, `fk_calibration_curve.png`, `fk_roc_curve.png`, `fk_shap_summary.png`, `fk_shap_bar.png`, `fk_xgboost_report.md`
 
 ### Key findings (Phase 9)
 - StatsBomb xG: Brier=0.0754, AUC=0.8143 vs our XGBoost: Brier=0.0801, AUC=0.7866
@@ -476,6 +495,13 @@ python -m src.inference.predict
 - Recommended standalone model: XGBoost full + Platt calibration (Brier=0.0801, AUC=0.7866)
 - Recommended model with StatsBomb available: stacked second-stage LR (Brier=0.0769, AUC=0.8129)
 - ~6% remaining Brier gap vs StatsBomb is a feature ceiling (freeze-frame), not a modelling ceiling
+
+### Key decisions (free-kick model)
+- Trained on `02_free_kick_shots.parquet` (4,229 shots, 6.5% goal rate)
+- Feature set reduced to 11 features vs open-play's 22: excluded near-zero-variance flags (body part other than foot, all technique flags, all play-pattern flags, is_weak_foot, is_first_time — always False in free-kick population)
+- Inline Platt calibration (fit on val set); both raw and calibrated predictions saved
+- Same XGBoost hyperparameters as open-play model (`xgboost.yaml`) — early stopping handles small-sample regularisation
+- Reuses `04_split_index.parquet` match assignments for consistent evaluation
 
 ### In Progress
 - Phase 11: Inference Pipeline

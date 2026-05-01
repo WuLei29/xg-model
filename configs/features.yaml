@@ -50,6 +50,26 @@ feature_sets:
     - baseline_contextual
     - advanced_gamestate # We add gamestate to the model
 
+# Free-kick model feature set (direct free kicks only).
+# Excludes features with near-zero variance in the free-kick population:
+#   - is_header / is_other_bodypart: free kicks are ~100% foot shots
+#   - technique flags: minimal variation (mostly "Normal")
+#   - play-pattern flags: all shots share "From Free Kick" — zero variance
+#   - is_weak_foot: kickers deliberately choose their foot, so the preferred-foot
+#     distinction that matters for open-play does not apply here
+freekick_full:
+  - distance_to_goal
+  - visible_angle
+  - distance_to_near_post
+  - distance_to_far_post
+  - x_from_goal_line
+  - is_central
+  - is_right_foot
+  - is_left_foot
+  - minute
+  - score_diff_at_shot
+  - is_late_game
+
 # Columns kept in the design matrix for metadata / subgroup analysis but never model inputs.
 metadata_cols:
   - shot_id
