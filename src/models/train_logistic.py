@@ -396,9 +396,9 @@ def generate_report(
     lines.append(textwrap.dedent("""\
 
         **Interpretation guide:**
-        - A coefficient of −0.08 for `distance_to_goal` means each extra yard from goal
+        - A coefficient of −0.08 for `distance_to_goal` means each extra metre from goal
           multiplies the *odds* of scoring by exp(−0.08) ≈ 0.92 — about an 8% odds
-          reduction per yard.
+          reduction per metre.
         - `odds_ratio < 1` → feature reduces probability (e.g. greater distance).
         - `odds_ratio > 1` → feature increases probability (e.g. is_header with a
           positive coefficient in certain contexts).

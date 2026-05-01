@@ -436,7 +436,7 @@ def generate_report(
         But football shot quality is not linear:
         - The relationship between distance and goal probability is not linear —
           it follows the geometry of the visible goal angle.
-        - A header from 6 yards differs from a header from 20 yards in a way that
+        - A header from 6 metres differs from a header from 20 metres in a way that
           a purely additive model cannot fully express.
         - First-time shots from a cross behave differently from first-time shots
           from a through ball, even at the same distance — an interaction effect.

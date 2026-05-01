@@ -4,10 +4,10 @@ This file provides guidance to Claude Code when working on this repository.
 
 ## Project Purpose
 
-Build a production-quality expected goals (xG) model from open football shot data. Two parallel modeling tracks:
+Build a production-quality expected goals (xG) model from open football shot data.
 
-- **Track A — "Real xG"**: trained on actual shot outcomes (goal = 1, no goal = 0). This is the primary model.
-- **Track B — "Teacher Imitation"**: trained to approximate StatsBomb xG values. This is a distillation / benchmark experiment.
+- **Primary model**: trained on actual shot outcomes (goal = 1, no goal = 0).
+- **Benchmark**: StatsBomb xG values are used as a reference to evaluate and understand our model — not as a training target.
 
 The dataset contains ~131,000 shots from StatsBomb and Wyscout open data, hosted at `https://huggingface.co/luxury-lakehouse/xg-model-statsbomb-wyscout`.
 
@@ -43,7 +43,7 @@ xg-model/
   src/
     data/                 # Data loading, cleaning, sample definition
     features/             # Feature engineering pipeline (baseline + advanced)
-    models/               # Model training: logistic regression, XGBoost, teacher
+    models/               # Model training: logistic regression, XGBoost
     evaluation/           # Metrics, calibration, subgroup analysis
     inference/            # Inference pipeline and artifact loading
     utils/                # Shared utilities (paths, config loading, plotting helpers)
@@ -262,38 +262,56 @@ The project follows 12 sequential phases. **Always complete and confirm one phas
 
 ---
 
-### Phase 9 — Teacher Imitation Model (Track B)
+### Phase 9 — Comparative Analysis & Gap Investigation
 
-**Goal**: Build a separate model that approximates StatsBomb xG, not reality.
+**Goal**: Benchmark our model against StatsBomb xG, understand where they agree and diverge, and identify what contextual information we are missing.
 
 **Theory to explain**:
-- Knowledge distillation: training a student model to mimic a teacher model's outputs
-- Why this is regression (predicting a continuous value), not classification
-- The philosophical difference: Track A learns from ground truth, Track B learns from a model's opinion
-- MSE/RMSE vs MAE: which loss function and why
-- What it means when the imitation model fails to match StatsBomb: the gap reveals what features/information StatsBomb uses that we don't have
-- Distribution comparison: are our predicted xG values distributed like StatsBomb's?
+- Why StatsBomb xG is not ground truth — it is another model's opinion, trained on richer features (freeze frames, GK position, etc.). Treating it as a benchmark is valid; treating it as a calibration target would inherit their biases.
+- What "gap analysis" means: systematic over/underestimation by shot type reveals which situations our feature set cannot explain.
+- Simpson's paradox in model comparison: a model can have better global metrics but worse behavior on important subgroups.
+- Why comparing calibration curves across models is more informative than comparing AUC alone.
 
-**Deliverables**: teacher-imitation training pipeline, comparison report (real model vs imitation vs StatsBomb)
+**Tasks**:
+1. **Three-way benchmark on test set**: evaluate LR, XGBoost, and StatsBomb xG with the same metrics (Brier score, log loss, ROC AUC, calibration curve). StatsBomb xG is treated as a "model" — its predictions are already in the dataset as `statsbomb_xg`.
+2. **Prediction distribution comparison**: plot histogram of predicted xG values for each model. Are they similarly distributed? Do they agree on shot difficulty?
+3. **Divergence analysis by subgroup**: compute mean(our_xg) − mean(statsbomb_xg) per subgroup (distance bins, headers, body part, play pattern, assist type). Identify the largest gaps and explain them in terms of missing features.
+4. **Scatter plot**: our XGBoost xG vs StatsBomb xG per shot — color by shot type. Identify systematic clusters of disagreement.
+5. **Stacking experiment** (research extension): train a second-stage logistic regression that takes our XGBoost output + `statsbomb_xg` as inputs, trained on actual outcomes. This answers: "what do we gain if StatsBomb is available at inference time?" Frame explicitly as a research exercise — this model is not deployable without StatsBomb.
+6. **Gap interpretation report**: for each major divergence, explain the most likely cause (missing freeze-frame, GK position, cross quality, body orientation not captured).
+
+**Theory to explain — stacking**:
+- What stacking (model blending) is: a meta-learner trained on the outputs of base models
+- Why our model and StatsBomb can have orthogonal errors (they were trained on different features / data)
+- The deployment constraint: the stacked model requires StatsBomb xG at inference time — it cannot be used standalone
+
+**Questions to answer**:
+1. How good is our XGBoost model vs StatsBomb on the same test set?
+2. On which shot types do the two approaches diverge most?
+3. Where do missing contextual features most likely explain the remaining gap?
+4. What do we gain from stacking, and is it worth the dependency on StatsBomb?
+
+**Deliverables**: `src/evaluation/compare.py`, three-way metrics table, prediction distribution plots, divergence heatmap by subgroup, scatter plot, stacking experiment results, `09_compare_report.md`
 
 **Rules**:
-- Keep this completely separate from Track A
-- Make it explicit in all outputs that this model approximates a provider estimate
+- StatsBomb xG is a benchmark, never a calibration target for our primary model
+- All three "models" must be evaluated on the same test split
+- The stacking experiment must be clearly labelled as requiring StatsBomb at inference time
 
 ---
 
-### Phase 10 — Comparative Analysis
+### Phase 10 — Production Recommendation
 
-**Goal**: Answer the key research questions.
+**Goal**: Synthesise all findings into a clear recommendation about which model to use and under what conditions.
 
-**Questions to answer**:
-1. How good is my own real xG model compared to a state-of-the-art provider?
-2. How close can I get to StatsBomb xG with my features?
-3. On which shot types do the two approaches diverge most?
-4. Does adding freeze-frame features narrow the gap?
-5. Where do missing contextual features likely explain the remaining gap?
+**Tasks**:
+- Summarise the full model comparison: LR vs XGBoost vs StatsBomb vs stacked
+- State the recommended production model with justification (expected: calibrated XGBoost full-feature model)
+- List the known failure modes and limitations
+- Describe what additional data or features would most improve the model
+- Document the deployment conditions (standalone vs with StatsBomb available)
 
-**Deliverables**: final comparison report, plots, production recommendation
+**Deliverables**: `10_production_recommendation.md` (part of the Phase 11 inference pipeline documentation)
 
 ---
 
@@ -328,7 +346,7 @@ Forbidden features (post-shot):
 - Shot end coordinates (x_end, y_end) — reveal where the ball went after the shot
 - GoalMouthY, GoalMouthZ — where the ball crossed the goal line
 - Any "blocked" / "saved" / "post" outcome indicators used as features
-- xG from another provider used as a feature in Track A (it is the target in Track B)
+- `statsbomb_xg` as a feature in the primary model — it is a benchmark reference, not an input. It may only be used in the explicitly-labelled stacking experiment in Phase 9.
 
 ### Evaluation Hierarchy
 
@@ -406,10 +424,7 @@ python -m src.evaluation.calibration
 # Phase 8: Subgroup analysis
 python -m src.evaluation.subgroups
 
-# Phase 9: Teacher imitation
-python -m src.models.train_teacher
-
-# Phase 10: Comparison
+# Phase 9: Comparative analysis & gap investigation
 python -m src.evaluation.compare
 
 # Phase 11: Inference
@@ -420,15 +435,50 @@ python -m src.inference.predict
 
 ## Current State
 
-> Last updated: 2026-04-26
+> Last updated: 2026-04-30
 
 ### Done
 - Project plan defined (`project_plan_v0.md`)
 - Repository scaffolded
 - CLAUDE.md written
+- **Phase 1: Data Audit** — `src/data/audit.py` · outputs: `01_audit_report.md`, `01_value_mapping.json`, `01_null_summary.csv`
+- **Phase 2: Sample Definition** — `src/data/sample.py` · outputs: `02_open_play_shots.parquet` (82,380 shots, 10.3% goal rate), `02_free_kick_shots.parquet` (4,229 shots, 6.5% goal rate), `02_preferred_foot.parquet`, `02_sample_report.md`, `02_sample_stats.csv`
+- **Phase 3: Feature Engineering** — `src/features/build.py` · `configs/features.yaml` · outputs: `03_design_matrix.parquet` (82,380 rows, 22 model features), `03_feature_list.json`, `03_feature_report.md`
+- **Phase 4: Train/Val/Test Split** — `src/data/split.py` · `configs/split.yaml` · outputs: `04_train.parquet`, `04_val.parquet`, `04_test.parquet`, `04_split_index.parquet`
+- **Phase 5: Baseline Model (Logistic Regression)** — `src/models/train_logistic.py` · outputs: `05_logistic_baseline.joblib`, `05_logistic_full.joblib`, `05_val_predictions.parquet`, `05_test_predictions.parquet`, `05_metrics.csv`, `05_coefficients.csv`, `05_calibration_curve.png`, `05_roc_curve.png`, `05_logistic_report.md`
+- **Phase 6: XGBoost Model** — `src/models/train_xgboost.py` · `configs/xgboost.yaml` · outputs: `06_xgboost_baseline.json`, `06_xgboost_full.json`, `06_val_predictions.parquet`, `06_test_predictions.parquet`, `06_metrics.csv`, `06_shap_summary.png`, `06_shap_bar.png`, `06_calibration_curve.png`, `06_roc_curve.png`, `06_xgboost_report.md`
+
+### Key decisions made
+- StatsBomb data only (drops Wyscout — richer features, consistent schema, statsbomb_xg available as benchmark)
+- Open-play model: excludes penalties, direct free kicks, corners, kick-offs
+- Free-kick model: separate dataset, logistic regression only (sample too thin for XGBoost)
+- No freeze-frame features — production event data does not have them
+- Play pattern included: grouped into 3 binary flags (regular, counter, set_piece_restart); other restarts are implicit baseline
+- Preferred foot inferred statistically (≥70% threshold); `is_weak_foot` added as feature
+- Feature sets: "baseline" (20 features: spatial+categorical+contextual), "full" (22: adds score_diff_at_shot, is_late_game)
+- Coordinate system: SPADL standard (105x68 metres). Raw StatsBomb coordinates (120x80) are converted in Phase 2 (sample.py). All spatial features are in metres.
+- All features recomputed from raw coordinates (distance_to_goal, visible_angle, etc.) — not relying on StatsBomb precomputed values
+- XGBoost config: `max_depth=4`, `lr=0.05`, `min_child_weight=15`, `subsample/colsample_bytree=0.8`, early stopping on val log loss (50 rounds patience)
+- XGBoost models saved as native JSON (portable, human-readable); LR models saved as joblib pipelines
+- SHAP via `TreeExplainer` on val sample (5000 rows); beeswarm + mean|SHAP| bar chart
+
+- **Phase 7: Calibration** — `src/evaluation/calibration.py` · outputs: `07_metrics.csv`, `07_test_predictions.parquet`, `07_val_predictions.parquet`, calibrated model artifacts (Platt + isotonic variants for LR and XGBoost), `07_calibration_report.md`
+- **Phase 8: Subgroup Analysis** — `src/evaluation/subgroups.py` · outputs: `08_subgroup_metrics_lr.csv`, `08_subgroup_metrics_xgb.csv`, `08_subgroup_report.md`
+- **Phase 9: Comparative Analysis & Gap Investigation** — `src/evaluation/compare.py` · outputs: `09_benchmark_metrics.csv`, `09_divergence_by_subgroup.csv`, `09_stacking_metrics.csv`, `09_calibration_comparison.png`, `09_prediction_distributions.png`, `09_scatter_xgb_vs_statsbomb.png`, `09_divergence_by_subgroup.png`, `09_stacking_calibration.png`, `09_compare_report.md`
+- **Phase 10: Production Recommendation** — `outputs/reports/10_production_recommendation.md`
+
+### Key findings (Phase 9)
+- StatsBomb xG: Brier=0.0754, AUC=0.8143 vs our XGBoost: Brier=0.0801, AUC=0.7866
+- Largest divergences: close range (+1.31%) and counter-attacks (+0.88%) — we predict higher than StatsBomb, likely because they have GK/defender positions
+- Stacking our XGBoost + StatsBomb reduces Brier to 0.0769 (AUC 0.8129) — confirms StatsBomb carries orthogonal information
+
+### Key decisions (Phase 10)
+- Recommended standalone model: XGBoost full + Platt calibration (Brier=0.0801, AUC=0.7866)
+- Recommended model with StatsBomb available: stacked second-stage LR (Brier=0.0769, AUC=0.8129)
+- ~6% remaining Brier gap vs StatsBomb is a feature ceiling (freeze-frame), not a modelling ceiling
 
 ### In Progress
-- Phase 1: Data Audit (next step)
+- Phase 11: Inference Pipeline
 
 ### Pending
-- Phases 2–12
+- Phases 11–12
